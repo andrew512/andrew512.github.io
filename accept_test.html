@@ -17,10 +17,10 @@
                 }))
             }
 
-            var sendError = function (error) {
+            var sendError = function (message) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'error',
-                    message: error.message
+                    message
                 }))
             }
 
@@ -43,12 +43,15 @@
                     }
                     catch (err) {
                         log("Failed to parse RN message: " + err)
-                        sendError(err)
+                        sendError("Failed to parse RN message: " + err)
                         return;
                     }
 
                     promiseChain.then(function () {
                         promiseChain = new Promise(function (resolve) {
+                            if (message.throwError) {
+                                throw new Error('simulated error')
+                            }
                             // call out to Accept.js
                             window.Accept.dispatchData(message, resolve);
                         }).then(function (result) {
@@ -56,7 +59,7 @@
                             sendResult(result)
                         }).catch(function (e) {
                             // log('rnBridge send failed ' + e.message);
-                            sendError(e)
+                            sendError(e.message)
                         });
                     });
                 });
