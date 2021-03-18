@@ -20,7 +20,7 @@
             var sendError = function (error) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'error',
-                    message: e.message
+                    message: error.message
                 }))
             }
 
