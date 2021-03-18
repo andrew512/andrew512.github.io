@@ -1,0 +1,74 @@
+<html>
+
+<head>
+    <title>Accept</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="https://jstest.authorize.net/v1/Accept.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <div id="log" style="font-family: sans-serif; font-size: 20pt;">
+    </div>
+
+    <script>
+        (function () {
+            var sendResult = function (result) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'result',
+                    data: result
+                }))
+            }
+
+            var sendError = function (error) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'error',
+                    message: e.message,
+                    data: e
+                }))
+            }
+
+            var log = function (msg) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'log',
+                    message: msg
+                }))
+                var logger = document.getElementById('log');
+                logger.innerHTML = logger.innerHTML + '<br>' + msg;
+            }
+            log('init https://jstest.authorize.net/v1/Accept.js')
+
+            var promiseChain = Promise.resolve();
+            var init = function () {
+                window.addEventListener('message', function (e) {
+                    log("Message received: " + e.data);
+
+                    var message;
+                    try {
+                        message = JSON.parse(e.data);
+                    }
+                    catch (err) {
+                        log("failed to parse message from react-native " + err);
+                        return;
+                    }
+
+                    promiseChain.then(function () {
+                        /* Make Accept.js Request */
+                        promiseChain = new Promise(function (resolve) {
+                            window.Accept.dispatchData(message, resolve);
+                            // resolve({authorize:'test'})
+                        }).then(function (result) {
+                            log(JSON.stringify(result));
+                            sendResult(result)
+                        }).catch(function (e) {
+                            log('rnBridge send failed ' + e.message);
+                            sendError(e)
+                        });
+                    });
+                });
+            };
+            init();
+        }());
+    </script>
+</body>
+
+</html>
