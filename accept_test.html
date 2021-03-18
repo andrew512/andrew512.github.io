@@ -7,10 +7,8 @@
 </head>
 
 <body>
-    <div id="log" style="font-family: sans-serif; font-size: 20pt;">
-    </div>
-
     <script>
+        // self-executing function
         (function () {
             var sendResult = function (result) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -22,8 +20,7 @@
             var sendError = function (error) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'error',
-                    message: e.message,
-                    data: e
+                    message: e.message
                 }))
             }
 
@@ -32,35 +29,33 @@
                     type: 'log',
                     message: msg
                 }))
-                var logger = document.getElementById('log');
-                logger.innerHTML = logger.innerHTML + '<br>' + msg;
             }
+
             log('init https://jstest.authorize.net/v1/Accept.js')
 
-            var promiseChain = Promise.resolve();
+            var promiseChain = Promise.resolve()
             var init = function () {
                 window.addEventListener('message', function (e) {
-                    log("Message received: " + e.data);
-
-                    var message;
+                    log("Message received: " + e.data)
+                    var message
                     try {
-                        message = JSON.parse(e.data);
+                        message = JSON.parse(e.data)
                     }
                     catch (err) {
-                        log("failed to parse message from react-native " + err);
+                        log("Failed to parse RN message: " + err)
+                        sendError(err)
                         return;
                     }
 
                     promiseChain.then(function () {
-                        /* Make Accept.js Request */
                         promiseChain = new Promise(function (resolve) {
+                            // call out to Accept.js
                             window.Accept.dispatchData(message, resolve);
-                            // resolve({authorize:'test'})
                         }).then(function (result) {
-                            log(JSON.stringify(result));
+                            // log(JSON.stringify(result));
                             sendResult(result)
                         }).catch(function (e) {
-                            log('rnBridge send failed ' + e.message);
+                            // log('rnBridge send failed ' + e.message);
                             sendError(e)
                         });
                     });
