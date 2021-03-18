@@ -43,7 +43,7 @@
                     }
                     catch (err) {
                         log("Failed to parse RN message: " + err)
-                        sendError("Failed to parse RN message: " + err)
+                        sendError(`${err.message}: ${JSON.stringify(err)}`)
                         return;
                     }
 
@@ -57,9 +57,9 @@
                         }).then(function (result) {
                             // log(JSON.stringify(result));
                             sendResult(result)
-                        }).catch(function (e) {
+                        }).catch(function (err) {
                             // log('rnBridge send failed ' + e.message);
-                            sendError(e.message)
+                            sendError(`${err.message}: ${JSON.stringify(err)}`)
                         });
                     });
                 });
