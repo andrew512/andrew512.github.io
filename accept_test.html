@@ -8,23 +8,23 @@
 
 <body>
     <script>
-        // self-executing function
-        (function () {
-            var sendResult = function (result) {
+        // immediately invoked function
+        (function iffy() {
+            function sendResult(result) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'result',
                     data: result
                 }))
             }
 
-            var sendError = function (message) {
+            function sendError(message) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'error',
                     message
                 }))
             }
 
-            var log = function (msg) {
+            function log(msg) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'log',
                     message: msg
@@ -34,8 +34,8 @@
             log('init https://jstest.authorize.net/v1/Accept.js')
 
             var promiseChain = Promise.resolve()
-            var init = function () {
-                window.addEventListener('message', function (e) {
+            function init() {
+                window.addEventListener('message', function messageHandler(e) {
                     log("Message received: " + e.data)
                     var message
                     try {
@@ -44,28 +44,28 @@
                     catch (err) {
                         log("Failed to parse RN message: " + err)
                         sendError(`${err.message}: ${err.stack}`)
-                        return;
+                        return
                     }
 
-                    promiseChain.then(function () {
-                        promiseChain = new Promise(function (resolve) {
+                    promiseChain.then(function acceptWrapper() {
+                        promiseChain = new Promise(function dispatchToAccept(resolve) {
                             if (message.throwError) {
                                 throw new Error('simulated error')
                             }
                             // call out to Accept.js
-                            window.Accept.dispatchData(message, resolve);
-                        }).then(function (result) {
+                            window.Accept.dispatchData(message, resolve)
+                        }).then(function onDispatchResult(result) {
                             // log(JSON.stringify(result));
                             sendResult(result)
-                        }).catch(function (err) {
+                        }).catch(function onDispatchError(err) {
                             // log('rnBridge send failed ' + e.message);
                             sendError(`${err.message}: ${err.stack}`)
-                        });
-                    });
-                });
-            };
-            init();
-        }());
+                        })
+                    })
+                })
+            }
+            init()
+        }())
     </script>
 </body>
 
