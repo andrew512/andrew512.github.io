@@ -35,7 +35,7 @@
 
             var promiseChain = Promise.resolve()
             function init() {
-                window.addEventListener('message', function messageHandler(e) {
+                function messageHandler(e) {
                     log("Message received: " + e.data)
                     var message
                     try {
@@ -62,7 +62,10 @@
                             sendError(`${err.message}: ${err.stack}`)
                         })
                     })
-                })
+                }
+
+                window.addEventListener('message', messageHandler)
+                window.document.addEventListener('message', messageHandler)
             }
             init()
         }())
