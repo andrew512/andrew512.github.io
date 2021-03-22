@@ -11,6 +11,7 @@
         // immediately invoked function
         (function iffy() {
             function sendResult(result) {
+                if (!window.ReactNativeWebView) return
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'result',
                     data: result
@@ -18,6 +19,7 @@
             }
 
             function sendError(message) {
+                if (!window.ReactNativeWebView) return
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'error',
                     message
@@ -25,6 +27,7 @@
             }
 
             function log(msg) {
+                if (!window.ReactNativeWebView) return
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'log',
                     message: msg
@@ -35,7 +38,7 @@
 
             var promiseChain = Promise.resolve()
             function init() {
-                window.addEventListener('message', function messageHandler(e) {
+                function messageHandler(e) {
                     log("Message received: " + e.data)
                     var message
                     try {
@@ -62,7 +65,14 @@
                             sendError(`${err.message}: ${err.stack}`)
                         })
                     })
-                })
+                }
+
+                // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-697980927
+                // listen on `window` for iOS, `document` for Android
+                var isUIWebView = /\(ip.*applewebkit(?!.*(version|crios))/i.test(navigator.userAgent)
+                var receiver = isUIWebView ? window : document
+                log("isUIWebView: " + isUIWebView)
+                receiver.addEventListener('message', messageHandler);
             }
             init()
         }())

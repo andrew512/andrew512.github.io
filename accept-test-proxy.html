@@ -35,11 +35,9 @@
             }
 
             log('init https://jstest.authorize.net/v1/Accept.js')
-            log('!!window.ReactNativeWebView', !!window.ReactNativeWebView)
 
             var promiseChain = Promise.resolve()
             function init() {
-                log('init called')
                 function messageHandler(e) {
                     log("Message received: " + e.data)
                     var message
@@ -69,11 +67,8 @@
                     })
                 }
 
-                // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-467430141
-                // use window for iOS
-                // window.addEventListener('message', messageHandler)
-                // use document for Android
-                // document.addEventListener('message', messageHandler)
+                // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-697980927
+                // listen on `window` for iOS, `document` for Android
                 var isUIWebView = /\(ip.*applewebkit(?!.*(version|crios))/i.test(navigator.userAgent)
                 var receiver = isUIWebView ? window : document
                 log("isUIWebView: " + isUIWebView)
