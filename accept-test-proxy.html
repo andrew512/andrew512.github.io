@@ -11,30 +11,32 @@
         // immediately invoked function
         (function iffy() {
             function sendResult(result) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
+                window.ReactNativeWebView?.postMessage(JSON.stringify({
                     type: 'result',
                     data: result
                 }))
             }
 
             function sendError(message) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
+                window.ReactNativeWebView?.postMessage(JSON.stringify({
                     type: 'error',
                     message
                 }))
             }
 
             function log(msg) {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
+                window.ReactNativeWebView?.postMessage(JSON.stringify({
                     type: 'log',
                     message: msg
                 }))
             }
 
             log('init https://jstest.authorize.net/v1/Accept.js')
+            log('!!window.ReactNativeWebView', !!window.ReactNativeWebView)
 
             var promiseChain = Promise.resolve()
             function init() {
+                log('init called')
                 function messageHandler(e) {
                     log("Message received: " + e.data)
                     var message
