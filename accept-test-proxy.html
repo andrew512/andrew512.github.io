@@ -69,9 +69,15 @@
                     })
                 }
 
-                window.addEventListener('message', messageHandler)
-                window.document.addEventListener('message', messageHandler)
-
+                // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-467430141
+                // use window for iOS
+                // window.addEventListener('message', messageHandler)
+                // use document for Android
+                // document.addEventListener('message', messageHandler)
+                var isUIWebView = /\(ip.*applewebkit(?!.*(version|crios))/i.test(navigator.userAgent)
+                var receiver = isUIWebView ? window : document
+                log("isUIWebView: " + isUIWebView)
+                receiver.addEventListener('message', messageHandler);
             }
             init()
         }())
