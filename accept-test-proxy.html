@@ -39,6 +39,9 @@
             function loadAcceptJs(url, onLoad) {
                 var newScript = document.createElement("script")
                 newScript.onerror = function onLoadAcceptJsError(error) {
+                    console.log(error)
+                    console.log(error.message)
+                    console.log(error.error)
                     var message = `Script error: ${JSON.stringify(error)}`
                     console.log(message)
                     sendError(message)
