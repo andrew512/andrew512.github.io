@@ -39,8 +39,9 @@
             function loadAcceptJs(url, onLoad) {
                 var newScript = document.createElement("script")
                 newScript.onerror = function onLoadAcceptJsError(error) {
-                    log('Script error: ' + JSON.stringify(error))
-                    sendError('Script error: ' + JSON.stringify(error))
+                    var message = `Script error: ${JSON.stringify(error)}`
+                    console.log(message)
+                    sendError(message)
                 }
                 if (onLoad) { newScript.onload = onLoad }
                 document.head.appendChild(newScript)
@@ -49,6 +50,7 @@
 
             log(`init ${ACCEPT_URL}`)
             loadAcceptJs(ACCEPT_URL, function onLoadAcceptJs() {
+                console.log('Script loaded!')
                 log('Script loaded!')
             })
 
@@ -85,12 +87,12 @@
 
                 var timer = setTimeout(function checkForAccept() {
                     if (!window.Accept) {
-                        var message = 'Accept.js failed to set on window object after 7s, reloading...'
-                        log(message)
+                        var message = 'Accept.js failed to set on window object, reloading...'
+                        console.log(message)
                         sendError(message)
                         location.reload()
                     }
-                }, 7000)
+                }, 30000)
 
                 // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-697980927
                 // listen on `window` for iOS, `document` for Android
