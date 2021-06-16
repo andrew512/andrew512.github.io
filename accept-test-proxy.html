@@ -3,79 +3,104 @@
 <head>
     <title>Accept.js RN Bridge (Test)</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <script type="text/javascript" src="https://jstest.authorize.net/v1/Accept.jss" charset="utf-8"></script>
+    <!-- <script type="text/javascript" src="https://jstest.authorize.net/v1/Accept.jss" onerror="" charset="utf-8"></script> -->
 </head>
 
 <body>
     <script>
         // immediately invoked function
-        (function iffy() {
-            function sendResult(result) {
-                if (!window.ReactNativeWebView) return
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'result',
-                    data: result
-                }))
-            }
+        var ACCEPT_URL = 'https://jstest.authorize.net/v1/Accept.jss'
 
-            function sendError(message) {
-                if (!window.ReactNativeWebView) return
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'error',
-                    message
-                }))
-            }
-
-            function log(msg) {
-                if (!window.ReactNativeWebView) return
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                    type: 'log',
-                    message: msg
-                }))
-            }
-
-            log('init https://jstest.authorize.net/v1/Accept.js')
-
-            var promiseChain = Promise.resolve()
-            function init() {
-                function messageHandler(e) {
-                    log("Message received: " + e.data)
-                    var message
-                    try {
-                        message = JSON.parse(e.data)
-                    }
-                    catch (err) {
-                        log("Failed to parse RN message: " + err)
-                        sendError(`${err.message}: ${err.stack}`)
-                        return
-                    }
-
-                    promiseChain.then(function acceptWrapper() {
-                        promiseChain = new Promise(function dispatchToAccept(resolve) {
-                            if (message.throwError) {
-                                throw new Error('simulated error')
-                            }
-                            // call out to Accept.js
-                            window.Accept.dispatchData(message, resolve)
-                        }).then(function onDispatchResult(result) {
-                            // log(JSON.stringify(result));
-                            sendResult(result)
-                        }).catch(function onDispatchError(err) {
-                            // log('rnBridge send failed ' + e.message);
-                            sendError(`${err.message}: ${err.stack}`)
-                        })
-                    })
+            (function iffy() {
+                function sendResult(result) {
+                    if (!window.ReactNativeWebView) return
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'result',
+                        data: result
+                    }))
                 }
 
-                // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-697980927
-                // listen on `window` for iOS, `document` for Android
-                var isUIWebView = /\(ip.*applewebkit(?!.*(version|crios))/i.test(navigator.userAgent)
-                var receiver = isUIWebView ? window : document
-                log("isUIWebView: " + isUIWebView)
-                receiver.addEventListener('message', messageHandler);
-            }
-            init()
-        }())
+                function sendError(message) {
+                    if (!window.ReactNativeWebView) return
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'error',
+                        message
+                    }))
+                }
+
+                function log(msg) {
+                    if (!window.ReactNativeWebView) return
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'log',
+                        message: msg
+                    }))
+                }
+
+                function loadAcceptJs(url, onLoad) {
+                    var newScript = document.createElement("script")
+                    newScript.onerror = function (error) {
+                        log('Script error: ' + JSON.stringify(error))
+                        sendError('Script error: ' + JSON.stringify(error))
+                    }
+                    if (onLoad) { newScript.onload = onLoad }
+                    document.head.appendChild(newScript)
+                    newScript.src = url
+                }
+
+                log(`init ${ACCEPT_URL}`)
+                loadAcceptJs(ACCEPT_URL, function () {
+                    log('Script loaded!')
+                })
+
+                var promiseChain = Promise.resolve()
+                function init() {
+                    function messageHandler(e) {
+                        log("Message received: " + e.data)
+                        var message
+                        try {
+                            message = JSON.parse(e.data)
+                        }
+                        catch (err) {
+                            log("Failed to parse RN message: " + err)
+                            sendError(`${err.message}: ${err.stack}`)
+                            return
+                        }
+
+                        promiseChain.then(function acceptWrapper() {
+                            promiseChain = new Promise(function dispatchToAccept(resolve) {
+                                if (message.throwError) {
+                                    throw new Error('simulated error')
+                                }
+                                // call out to Accept.js
+                                window.Accept.dispatchData(message, resolve)
+                            }).then(function onDispatchResult(result) {
+                                // log(JSON.stringify(result));
+                                sendResult(result)
+                            }).catch(function onDispatchError(err) {
+                                // log('rnBridge send failed ' + e.message);
+                                sendError(`${err.message}: ${err.stack}`)
+                            })
+                        })
+                    }
+
+                    var timer = setTimeout(function checkForAccept() {
+                        if (!window.Accept) {
+                            var message = 'Accept.js failed to set on window object after 7s, reloading...'
+                            log(message)
+                            sendError(message)
+                            location.reload()
+                        }
+                    }, 7000)
+
+                    // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-697980927
+                    // listen on `window` for iOS, `document` for Android
+                    var isUIWebView = /\(ip.*applewebkit(?!.*(version|crios))/i.test(navigator.userAgent)
+                    var receiver = isUIWebView ? window : document
+                    log("isUIWebView: " + isUIWebView)
+                    receiver.addEventListener('message', messageHandler);
+                }
+                init()
+            }())
     </script>
 </body>
 
