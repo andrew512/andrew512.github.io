@@ -3,16 +3,13 @@
 <head>
     <title>Accept.js RN Bridge (Test)</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <!-- <script type="text/javascript" src="https://jstest.authorize.net/v1/Accept.jss" onerror="" charset="utf-8"></script> -->
 </head>
 
 <body>
     <script>
         // immediately invoked function
         (function iffy() {
-            var random = Math.floor(Math.random() * 2)
-            var ACCEPT_URL = !random ? 'https://jstest.authorize.net/v1/Accept.js' :
-                'https://asdfjstest.authorize.net/v1/Accept.js'
+            var ACCEPT_URL = 'https://jstest.authorize.net/v1/Accept.js'
 
             function sendResult(result) {
                 if (!window.ReactNativeWebView) {
@@ -101,7 +98,7 @@
                         log('Accept.js failed to set on window object, reloading...')
                         location.reload()
                     }
-                }, 7000)
+                }, 10000)
 
                 // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-697980927
                 // listen on `window` for iOS, `document` for Android

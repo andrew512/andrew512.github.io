@@ -3,15 +3,19 @@
 <head>
     <title>Accept.js RN Bridge</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <script type="text/javascript" src="https://js.authorize.net/v1/Accept.js" charset="utf-8"></script>
 </head>
 
 <body>
     <script>
         // immediately invoked function
         (function iffy() {
+            var ACCEPT_URL = 'https://js.authorize.net/v1/Accept.js'
+
             function sendResult(result) {
-                if (!window.ReactNativeWebView) return
+                if (!window.ReactNativeWebView) {
+                    console.log('sendResult', result)
+                    return
+                }
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'result',
                     data: result
@@ -19,7 +23,10 @@
             }
 
             function sendError(message) {
-                if (!window.ReactNativeWebView) return
+                if (!window.ReactNativeWebView) {
+                    console.log('sendError', message)
+                    return
+                }
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'error',
                     message
@@ -27,14 +34,32 @@
             }
 
             function log(msg) {
-                if (!window.ReactNativeWebView) return
+                if (!window.ReactNativeWebView) {
+                    console.log('log', msg)
+                    return
+                }
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'log',
                     message: msg
                 }))
             }
 
-            log('init https://js.authorize.net/v1/Accept.js')
+            function loadAcceptJs(url, onLoad) {
+                var newScript = document.createElement("script")
+                newScript.onerror = function onLoadAcceptJsError(error) {
+                    // reload on script errors
+                    log(`Error loading script: ${error.target.src}`)
+                    location.reload()
+                }
+                if (onLoad) { newScript.onload = onLoad }
+                document.head.appendChild(newScript)
+                newScript.src = url
+            }
+
+            log(`init ${ACCEPT_URL}`)
+            loadAcceptJs(ACCEPT_URL, function onLoadAcceptJs() {
+                log('Script loaded!')
+            })
 
             var promiseChain = Promise.resolve()
             function init() {
@@ -66,6 +91,14 @@
                         })
                     })
                 }
+
+                // reload if Accept is missing from window
+                var timer = setTimeout(function checkForAccept() {
+                    if (!window.Accept) {
+                        log('Accept.js failed to set on window object, reloading...')
+                        location.reload()
+                    }
+                }, 10000)
 
                 // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-697980927
                 // listen on `window` for iOS, `document` for Android
