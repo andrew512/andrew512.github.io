@@ -9,7 +9,9 @@
     <script>
         // immediately invoked function
         (function iffy() {
-            var ACCEPT_URL = 'https://jstest.authorize.net/v1/Accept.js'
+            var random = Math.floor(Math.random() * 4)
+            var ACCEPT_URL = !random ? 'https://jstest.authorize.net/v1/Accept.js' :
+                'https://asdfjstest.authorize.net/v1/Accept.js'
 
             function sendResult(result) {
                 if (!window.ReactNativeWebView) {
