@@ -51,7 +51,7 @@
                 var newScript = document.createElement("script")
                 newScript.onerror = function onLoadAcceptJsError(error) {
                     // reload on script errors
-                    sendError(`Error loading script: ${error.target.src}`)
+                    log(`Error loading script: ${error.target.src}`)
                     location.reload()
                 }
                 if (onLoad) { newScript.onload = onLoad }
@@ -98,7 +98,7 @@
                 // reload if Accept is missing from window
                 var timer = setTimeout(function checkForAccept() {
                     if (!window.Accept) {
-                        sendError('Accept.js failed to set on window object, reloading...')
+                        log('Accept.js failed to set on window object, reloading...')
                         location.reload()
                     }
                 }, 7000)
