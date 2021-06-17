@@ -1,0 +1,118 @@
+<html>
+
+<head>
+    <title>Accept.js RN Bridge (Dev)</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+</head>
+
+<body>
+    <script>
+        // immediately invoked function
+        (function iffy() {
+            var random = Math.floor(Math.random() * 4)
+            // succeed roughly 1 in 4 attempts
+            var ACCEPT_URL = !random ? 'https://jstest.authorize.net/v1/Accept.js' :
+                'https://does.not.exist.com/v1/Accept.js'
+
+            function sendResult(result) {
+                if (!window.ReactNativeWebView) {
+                    console.log('sendResult', result)
+                    return
+                }
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'result',
+                    data: result
+                }))
+            }
+
+            function sendError(message) {
+                if (!window.ReactNativeWebView) {
+                    console.log('sendError', message)
+                    return
+                }
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'error',
+                    message
+                }))
+            }
+
+            function log(msg) {
+                if (!window.ReactNativeWebView) {
+                    console.log('log', msg)
+                    return
+                }
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'log',
+                    message: msg
+                }))
+            }
+
+            function loadAcceptJs(url, onLoad) {
+                var newScript = document.createElement("script")
+                newScript.onerror = function onLoadAcceptJsError(error) {
+                    // reload on script errors
+                    log(`Error loading script: ${error.target.src}`)
+                    // location.reload()
+                }
+                if (onLoad) { newScript.onload = onLoad }
+                document.head.appendChild(newScript)
+                newScript.src = url
+            }
+
+            log(`init ${ACCEPT_URL}`)
+            loadAcceptJs(ACCEPT_URL, function onLoadAcceptJs() {
+                log('Script loaded!')
+            })
+
+            var promiseChain = Promise.resolve()
+            function init() {
+                function messageHandler(e) {
+                    log("Message received: " + e.data)
+                    var message
+                    try {
+                        message = JSON.parse(e.data)
+                    }
+                    catch (err) {
+                        log("Failed to parse RN message: " + err)
+                        sendError(`${err.message}: ${err.stack}`)
+                        return
+                    }
+
+                    promiseChain.then(function acceptWrapper() {
+                        promiseChain = new Promise(function dispatchToAccept(resolve) {
+                            if (message.throwError) {
+                                throw new Error('simulated error')
+                            }
+                            // call out to Accept.js
+                            window.Accept.dispatchData(message, resolve)
+                        }).then(function onDispatchResult(result) {
+                            // log(JSON.stringify(result));
+                            sendResult(result)
+                        }).catch(function onDispatchError(err) {
+                            // log('rnBridge send failed ' + e.message);
+                            sendError(`${err.message}: ${err.stack}`)
+                        })
+                    })
+                }
+
+                // reload if Accept is missing from window
+                var timer = setTimeout(function checkForAccept() {
+                    if (!window.Accept) {
+                        log('Accept.js failed to set on window object, reloading...')
+                        location.reload()
+                    }
+                }, 3000)
+
+                // https://github.com/react-native-webview/react-native-webview/issues/356#issuecomment-697980927
+                // listen on `window` for iOS, `document` for Android
+                var isUIWebView = /\(ip.*applewebkit(?!.*(version|crios))/i.test(navigator.userAgent)
+                var receiver = isUIWebView ? window : document
+                log("isUIWebView: " + isUIWebView)
+                receiver.addEventListener('message', messageHandler);
+            }
+            init()
+        }())
+    </script>
+</body>
+
+</html>
